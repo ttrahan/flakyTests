@@ -1,7 +1,7 @@
 {
   "name": "flaky-test-demo",
   "version": "1.0.0",
-  "description": "Demo project to showcase TeamCity's intelligent flaky test detection vs Jenkins",
+  "description": "Demo project to showcase TeamCity's intelligent flaky test detection, Jenkins' manual approach, and CircleCI Chunk's automated remediation",
   "scripts": {
     "test": "jest --runInBand --reporters=default --reporters=jest-teamcity --forceExit",
     "test:ci": "jest --ci --coverage --forceExit",

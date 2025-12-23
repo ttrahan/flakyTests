@@ -1,0 +1,31 @@
+version: 2.1
+
+# CircleCI Chunk Agent Setup Configuration
+# This file defines the environment that Chunk uses to run and fix flaky tests
+# Chunk will automatically detect and use this configuration when performing tasks
+
+workflows:
+  main:
+    jobs:
+      - cci-agent-setup
+
+jobs:
+  cci-agent-setup:
+    docker:
+      - image: cimg/node:18.20
+    steps:
+      - checkout
+      
+      - run:
+          name: Install Dependencies
+          command: |
+            npm install
+      
+      - run:
+          name: Verify Test Environment
+          command: |
+            echo "Node version: $(node --version)"
+            echo "NPM version: $(npm --version)"
+            echo "Jest version: $(npm list jest --depth=0)"
+            echo "Test environment ready for Chunk agent"
+

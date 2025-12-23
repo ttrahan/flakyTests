@@ -1,6 +1,6 @@
-# Flaky Test Demo: TeamCity vs Jenkins
+# Flaky Test Demo: TeamCity vs Jenkins vs CircleCI Chunk
 
-This demo project showcases the dramatic difference between TeamCity's intelligent flaky test detection and Jenkins' manual approach.
+This demo project showcases different approaches to handling flaky tests: TeamCity's intelligent detection, Jenkins' manual approach, and CircleCI Chunk's automated remediation.
 
 ## 🎯 What This Demo Shows
 
@@ -93,19 +93,113 @@ docker exec jenkins cat /var/jenkins_home/secrets/initialAdminPassword
 - **No Built-in Intelligence**: Need plugins + custom scripts
 - **Poor Visibility**: Test results buried in logs
 
+## 🤖 CircleCI Chunk Agent (Automated Remediation)
+
+CircleCI Chunk is an AI-powered agent that not only detects flaky tests but also automatically fixes them by creating pull requests with remediation code.
+
+### Step 1: Set Up CircleCI Project (5 minutes)
+
+1. **Connect Repository to CircleCI**
+   ```bash
+   # Go to: https://circleci.com/
+   # Sign up or log in
+   # Click "Add Projects"
+   # Select this repository
+   # Click "Set Up Project"
+   ```
+
+2. **Verify Configuration**
+   - CircleCI will automatically detect `.circleci/config.yml`
+   - The configuration runs tests and generates JUnit XML reports
+   - First build will run automatically
+
+### Step 2: Enable Chunk Agent
+
+1. **Navigate to Organization Settings**
+   - Go to your CircleCI organization settings
+   - Click on "Chunk Tasks" in the sidebar
+
+2. **Assign a Flaky Test Fixing Task**
+   - Click "Assign Task"
+   - Select this project
+   - Configure task parameters:
+     - **Run Frequency**: Daily (recommended for demo)
+     - **Max Tests to Fix**: 5-10 per run
+     - **Solutions per Test**: 3
+     - **Validation Runs**: 5-10 consecutive passes required
+     - **Max Concurrent PRs**: 2-3
+
+3. **Start the Task**
+   - Click "Start Task"
+   - Chunk will begin analyzing your test suite
+
+### Step 3: Watch Chunk Work
+
+After Chunk analyzes your tests (usually after 2-3 builds), you'll see:
+
+- **Automatic Detection**: Chunk identifies flaky tests from test history
+- **Pull Requests Created**: Chunk opens PRs with fixes for flaky tests
+- **Fix Validation**: Each fix is validated with multiple test runs
+- **Review & Merge**: Review Chunk's fixes and merge when satisfied
+
+### What You'll See with CircleCI Chunk
+
+- **Automated Fixes**: Chunk creates PRs with actual code fixes, not just detection
+- **Intelligent Remediation**: Fixes address root causes (race conditions, timing issues, etc.)
+- **Custom Instructions**: Chunk follows guidelines in `.circleci/fix-flaky-test.md`
+- **Validation**: Each fix is tested multiple times before PR creation
+- **Transparency**: Full visibility into what Chunk changed and why
+
+### Chunk Configuration Files
+
+This repository includes:
+
+1. **`.circleci/config.yml`**: Main CircleCI configuration for running tests
+2. **`.circleci/cci-agent-setup.yml`**: Environment setup for Chunk agent
+3. **`.circleci/fix-flaky-test.md`**: Custom instructions guiding Chunk's fix strategies
+
+### Example Chunk Fix
+
+**Before (Flaky):**
+```javascript
+test('async operation without proper wait', async () => {
+  let value = null;
+  setTimeout(() => {
+    value = 'completed';
+  }, Math.random() * 100);
+  await new Promise(resolve => setTimeout(resolve, 50));
+  expect(value).toBe('completed');
+});
+```
+
+**After (Fixed by Chunk):**
+```javascript
+test('async operation without proper wait', async () => {
+  const value = await new Promise(resolve => {
+    setTimeout(() => {
+      resolve('completed');
+    }, 100);
+  });
+  expect(value).toBe('completed');
+});
+```
+
 ## 📊 The Comparison
 
-| Feature | TeamCity | Jenkins |
-|---------|----------|---------|
-| **Setup Time** | 2 minutes (Cloud) | 15+ minutes (self-hosted) |
-| **Flaky Test Detection** | ✅ Automatic | ❌ Requires plugins |
-| **Intelligent Retry** | ✅ Only flaky tests | ❌ Entire suite |
-| **Historical Analysis** | ✅ Built-in with UI | ❌ Manual or scripted |
-| **Test Categorization** | ✅ Flaky/Stable/Failed | ❌ Pass/Fail only |
-| **Investigation Tracking** | ✅ Native feature | ❌ External tracking |
-| **Muting with Visibility** | ✅ Supported | ❌ Tests disabled entirely |
-| **Statistical Analysis** | ✅ Automatic | ❌ DIY with scripts |
-| **UI Test Intelligence** | ✅ Rich visualizations | ❌ Basic reports |
+| Feature | TeamCity | Jenkins | CircleCI Chunk |
+|---------|----------|---------|----------------|
+| **Setup Time** | 2 minutes (Cloud) | 15+ minutes (self-hosted) | 5 minutes |
+| **Flaky Test Detection** | ✅ Automatic | ❌ Requires plugins | ✅ Automatic |
+| **Intelligent Retry** | ✅ Only flaky tests | ❌ Entire suite | ✅ Only flaky tests |
+| **Historical Analysis** | ✅ Built-in with UI | ❌ Manual or scripted | ✅ Automatic |
+| **Test Categorization** | ✅ Flaky/Stable/Failed | ❌ Pass/Fail only | ✅ Flaky/Stable/Failed |
+| **Investigation Tracking** | ✅ Native feature | ❌ External tracking | ✅ Via PRs |
+| **Muting with Visibility** | ✅ Supported | ❌ Tests disabled entirely | ✅ Fixed via PRs |
+| **Statistical Analysis** | ✅ Automatic | ❌ DIY with scripts | ✅ Automatic |
+| **UI Test Intelligence** | ✅ Rich visualizations | ❌ Basic reports | ✅ Via CircleCI UI |
+| **Automated Remediation** | ❌ Manual fixes | ❌ Manual fixes | ✅ **Automatic PRs** |
+| **Fix Validation** | ❌ Manual | ❌ Manual | ✅ **Automatic (5-10 runs)** |
+| **Custom Fix Strategies** | ❌ N/A | ❌ N/A | ✅ **Via instructions file** |
 
 ## 🎪 Demo Script for Presentations
 
@@ -129,6 +223,13 @@ docker exec jenkins cat /var/jenkins_home/secrets/initialAdminPassword
 2. TeamCity immediately flags it as a NEW failure, not flaky
 3. Jenkins treats it the same as any other failure
 4. Show how TeamCity's intelligence accelerates debugging
+
+### Act 4: CircleCI Chunk - The Future (Optional)
+1. Show CircleCI running the same tests
+2. After a few builds, show Chunk detecting flaky tests
+3. Demonstrate Chunk creating a PR with an automated fix
+4. Show the fix validation process
+5. Highlight how Chunk goes beyond detection to actual remediation
 
 ## 🔬 Understanding the Test Behaviors
 
@@ -199,7 +300,47 @@ Your demo is successful when viewers say:
 - [TeamCity Test Intelligence Docs](https://www.jetbrains.com/help/teamcity/test-intelligence.html)
 - [Migration Planning Kit](https://www.jetbrains.com/teamcity/migration/)
 - [TeamCity Cloud Free Trial](https://www.jetbrains.com/teamcity/cloud/)
+- [CircleCI Chunk Documentation](https://circleci.com/docs/chunk/)
+- [CircleCI Chunk Blog Post](https://circleci.com/blog/fix-flaky-tests-with-chunk/)
+
+## 🔧 CircleCI Chunk Setup Details
+
+### Configuration Files
+
+- **`.circleci/config.yml`**: Main CircleCI pipeline configuration
+  - Runs Jest tests with JUnit XML output
+  - Stores test results and coverage artifacts
+  - Uses Node.js 18.20 Docker image
+
+- **`.circleci/cci-agent-setup.yml`**: Chunk agent environment setup
+  - Defines the environment Chunk uses to run and fix tests
+  - Installs npm dependencies
+  - Verifies test environment readiness
+  - Automatically detected by Chunk when present
+
+- **`.circleci/fix-flaky-test.md`**: Custom instructions for Chunk
+  - Defines fix strategies for different flaky test types
+  - Sets code style preferences
+  - Specifies which tests can be fixed (not regression tests)
+  - Provides examples of good fixes
+
+### Chunk Task Configuration
+
+When setting up Chunk in CircleCI:
+
+1. **Run Frequency**: Start with daily to see results quickly
+2. **Max Tests to Fix**: 5-10 per run (adjust based on your needs)
+3. **Solutions per Test**: 3 attempts per flaky test
+4. **Validation Runs**: 5-10 consecutive passes required before PR creation
+5. **Max Concurrent PRs**: 2-3 to avoid overwhelming reviewers
+
+### Monitoring Chunk Activity
+
+- View Chunk tasks in: **Organization Settings → Chunk Tasks**
+- Check PRs created by Chunk in your repository
+- Review CircleCI builds triggered by Chunk for validation
+- Monitor fix success rates in Chunk task dashboard
 
 ---
 
-**Remember**: The goal isn't to bash Jenkins—it's to show how TeamCity's modern, intelligent approach solves real problems that waste developer time and erode confidence in CI/CD pipelines.
+**Remember**: The goal isn't to bash Jenkins—it's to show how modern CI/CD tools like TeamCity and CircleCI Chunk solve real problems that waste developer time and erode confidence in CI/CD pipelines. Each tool offers different strengths: TeamCity excels at detection and visibility, while CircleCI Chunk adds automated remediation.

@@ -1,0 +1,38 @@
+version: 2.1
+
+# CircleCI configuration for Flaky Test Demo
+# This config runs the test suite and generates JUnit XML reports for CircleCI
+
+orbs:
+  node: circleci/node@5.1.0
+
+jobs:
+  test:
+    docker:
+      - image: cimg/node:18.20
+    steps:
+      - checkout
+      
+      - node/install-packages:
+          pkg-manager: npm
+      
+      - run:
+          name: Run Tests with JUnit Output
+          command: npm run test:junit
+      
+      - store_test_results:
+          path: test-results
+      
+      - store_artifacts:
+          path: test-results
+          destination: test-results
+      
+      - store_artifacts:
+          path: coverage
+          destination: coverage
+
+workflows:
+  main:
+    jobs:
+      - test
+
